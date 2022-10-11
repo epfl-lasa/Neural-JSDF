@@ -1,1 +1,0 @@
-function pts = getPtsInsideMesh(mesh,n_pts)
