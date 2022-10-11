@@ -18,7 +18,7 @@ q_max = q_max+q_span*0.05;
 
 %% Preliminary dataset generation (rough data, no distance calculations yet)
 N_MESHES = length(mesh)-2;
-N_JPOS = 1; %1 joint position ~ 1000 workspace points. 
+N_JPOS = 10; %1 joint position ~ 1000 workspace points. 
 %N_JPOS = 5000; %value used in the paper  
 
 N_INSIDE = repmat(25,[N_MESHES,1]);
