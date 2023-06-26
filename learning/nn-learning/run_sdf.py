@@ -33,15 +33,16 @@ from sdf.robot_sdf import RobotSdfCollisionNet
 
 
 def run_sdf():
-    device = torch.device('cuda', 0)
+    device = torch.device('cpu', 0)
     tensor_args = {'device': device, 'dtype': torch.float32}
     data = loadmat('../data-sampling/datasets/data_mesh_test.mat')['dataset']
 
 
-    x = torch.Tensor(data[:, 0:10]).to(**tensor_args)
-    y = 100 * torch.Tensor(data[:, 10:]).to(**tensor_args)
+    x = torch.Tensor(data[:1000, 0:10]).to(**tensor_args)
+    y = 100 * torch.Tensor(data[:1000, 10:]).to(**tensor_args)
 
     dof = x.shape[1]
+    print('Input vector shape', x.shape)
     s = 256
     n_layers = 5
     skips = []
@@ -49,7 +50,8 @@ def run_sdf():
     if skips == []:
         n_layers-=1
     nn_model = RobotSdfCollisionNet(in_channels=dof, out_channels=y.shape[1], layers=[s] * n_layers, skips=skips)
-    nn_model.load_weights('sdf_256x5_mesh.pt', tensor_args)
+    #nn_model.load_weights('sdf_256x5_mesh.pt', tensor_args)
+    nn_model.load_weights('franka_collision_model.pt', tensor_args)
 
     nn_model.model.to(**tensor_args)
 
@@ -66,7 +68,13 @@ def run_sdf():
 
 
     # print(x.shape)
-    y_pred = model.forward(x)
+    t0 = time.time()
+    for i in range(1000):
+        y_pred = model.forward(x)
+    t1 = time.time()
+    print("Time: %f" % (t1 - t0))
+    print('Average time for one forward pass (microseconds): %f' % (1e6*(t1 - t0) / 1000))
+    print('Average time per sample (microseconds): %f' % (1e6*(t1 - t0) / 1000 / x.shape[0]))
     y_pred = torch.mul(y_pred, std_y) + mean_y
     y_test = torch.mul(y, std_y) + mean_y
     # print(y_pred.shape, y_test.shape)
