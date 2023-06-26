@@ -1,37 +1,20 @@
+import torch
 import numpy as np
-# load data.csv
-data = np.loadtxt('data.csv', delimiter=',')
-input_all = data[:, :10]
-nn_dist_all = data[:, 10:19]
-mesh_dist_all = data[:, 19:]
+import time
+from validation import Validation
 
-print("%d samples loaded" % input_all.shape[0])
-# remove negative distances
-thr = 3
-mindist_nn = nn_dist_all.min(axis=1)
-idx_mask = mindist_nn > thr
-input = input_all[idx_mask, :]
-nn_dist = nn_dist_all[idx_mask, :]
-mesh_dist = mesh_dist_all[idx_mask, :]
-print("%d samples remain after filtering" % input.shape[0])
+device = torch.device('cpu', 0)
+params = {'device': device, 'dtype': torch.float32}
 
-n_links = 9
+inputs = np.loadtxt('data_bad_opt.csv', delimiter=',')
+inputs = torch.tensor(inputs, **params)
+print("%d samples loaded" % inputs.shape[0])
 
-#plot distributions of distances
-import matplotlib.pyplot as plt
-fig = plt.figure()
-for i in range(n_links):
-    ax = fig.add_subplot(3, 3, i+1)
-    ax.hist(nn_dist[:, i], bins=100, label='NN')
-    ax.hist(mesh_dist[:, i], bins=100, label='Mesh')
-    ax.legend()
-    L1 = np.abs(nn_dist[:, i] - mesh_dist[:, i])
-    print('Link %d: L1 error: %4.2f, Max err: %4.2f' % (i, L1.mean(), L1.max()))
-plt.show(block=True)
+v = Validation()
+q_min = torch.tensor([-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175,	-2.8973, -1, -1, -0.2]).to(**params)
+q_max = torch.tensor([2.8973,	1.7628,	2.8973,	-0.0698,  2.8973,	3.7525,	2.8973, 1, 1, 1.3]).to(**params)
+q_span = q_max - q_min
 
-# save data with errors above threshold
-all_err = abs(nn_dist_all - mesh_dist_all)
-idx_large_err = np.any(all_err > 10, 1)
-print(data[idx_large_err * idx_mask, :].shape)
-print('Large errors: %d' % idx_large_err.sum())
-np.savetxt('data_large_err.csv', data[idx_large_err * idx_mask, :], delimiter=',', fmt='%4.3f')
+a = v.calc_nn_pred(inputs)
+b = v.calc_mesh_mindist(inputs)
+print('done')
