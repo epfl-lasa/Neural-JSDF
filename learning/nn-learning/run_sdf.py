@@ -41,6 +41,8 @@ def run_sdf():
     x = torch.Tensor(data[:1000, 0:10]).to(**tensor_args)
     y = 100 * torch.Tensor(data[:1000, 10:]).to(**tensor_args)
 
+    print(y.shape)
+
     dof = x.shape[1]
     print('Input vector shape', x.shape)
     s = 256
